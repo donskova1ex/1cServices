@@ -26,8 +26,7 @@ func main() {
 		logger.Error("empty API_PORT")
 		os.Exit(1)
 	}
-	//sqlDSN := "server=192.168.3.23,1430;user id=1C_user;password=MhO52KbhaC;database=crm_real_data;"
-	//apiPort := "8080"
+
 	db, err := repositories.NewSQLDB(sqlDSN)
 	if err != nil {
 		logger.Error(

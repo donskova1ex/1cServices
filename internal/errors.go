@@ -3,5 +3,5 @@ package internal
 import "errors"
 
 var ErrNotFound = errors.New("entity not found")
-var ErrGetById = errors.New("could not get entity by id")
-var ErrReadRows = errors.New("can not read rows")
+var ErrDBConnection = errors.New("database connection error")
+var ErrDBPing = errors.New("database ping error")

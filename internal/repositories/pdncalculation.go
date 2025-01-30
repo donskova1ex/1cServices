@@ -12,7 +12,6 @@ import (
 
 func (r *Repository) GetPDNParameters(ctx context.Context, loanid string) (*domain.CalculationParameters, error) {
 	pdnParameters := &domain.CalculationParameters{}
-	//query := "SELECT Id AS LoanId, 123 AS Incomes, 1234 AS Expenses, 412  AS IncomesTypeId, 5 AS AverageRegionIncomes FROM Loans l WHERE l.Id = @id"
 	query := `SELECT
   l.Id AS 'LoanId',
   lapcl.Income AS 'Incomes',
@@ -58,7 +57,6 @@ WHERE
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("%w with Id [%s]", internal.ErrNotFound, loanid)
-
 	}
 	return pdnParameters, nil
 }
