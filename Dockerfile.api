@@ -1,0 +1,17 @@
+FROM golang:alpine3.19 AS builder
+
+RUN apk update && apk add --no-cache git
+RUN apk add --no-cache make
+#FROM golang:1.23 AS build
+WORKDIR /go/src
+
+COPY *.mod *.sum ./
+RUN go mod download
+COPY . .
+
+ENV CGO_ENABLED=0
+#RUN go build -o openapi .
+RUN make api_local_build
+
+EXPOSE ${API_PORT}
+ENTRYPOINT [ "/go/src/bin/api" ]

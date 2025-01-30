@@ -1,0 +1,64 @@
+openapi: 3.0.0
+info:
+  description: This is a sample some endpoints for 1C
+  title: Swagger user management service - OpenAPI 3.0
+  version: 1.0.0
+servers:
+- url: https://1CServices.swagger.io/api/v1
+tags:
+- description: PDN calculation parametres
+  name: PDNcalculation
+paths:
+  /pdncalculation/{loanid}:
+    get:
+      description: returns the loan parameters for the calculation
+      operationId: getParametresByLoanId
+      parameters:
+      - description: ID of loan to return
+        explode: false
+        in: path
+        name: loanid
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/pdnparameters'
+          description: successful operation
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: parametres not found
+      summary: Find parametres by loan id
+      tags:
+      - PDNcalculation
+components:
+  schemas:
+    pdnparameters:
+      example:
+        LoanId: f7dabcd1-df8b-4fe6-9666-bf123782593e
+        Expenses: 16254.17
+        Incomes: 56756.07
+        IncomesTypeId: "1"
+        AverageRegionIncomes: 36587.0
+      properties:
+        LoanId:
+          example: f7dabcd1-df8b-4fe6-9666-bf123782593e
+          type: string
+        Incomes:
+          example: 56756.07
+          type: number
+        Expenses:
+          example: 16254.17
+          type: number
+        IncomesTypeId:
+          example: "1"
+          type: string
+        AverageRegionIncomes:
+          example: 36587.0
+          type: number
+      type: object
