@@ -27,6 +27,7 @@ func NewPDNParametres(pdnCalculationRepository PdnCalculationRepository, log Pdn
 }
 
 func (p *pdnCalculation) PDNCalculationByLoanId(ctx context.Context, loanid string) (*domain.CalculationParameters, error) {
+
 	pdnCalculation, err := p.pdnCalculationRepository.GetPDNParameters(ctx, loanid)
 	if err != nil {
 		p.log.Error(
