@@ -13,33 +13,46 @@ package openapi
 import (
 	"context"
 	"errors"
+	"github.com/donskova1ex/1cServices/internal/domain"
+	"log/slog"
 	"net/http"
 )
 
 // PDNcalculationAPIService is a service that implements the logic for the PDNcalculationAPIServicer
 // This service should implement the business logic for every endpoint for the PDNcalculationAPI API.
 // Include any external packages or services that will be required by this service.
+type PDNCalculationProcessor interface {
+	PDNCalculationByLoanId(ctx context.Context, loanid string) (*domain.CalculationParameters, error)
+}
+
 type PDNcalculationAPIService struct {
+	pdnCalculationProcessor PDNCalculationProcessor
+	log                     *slog.Logger
 }
 
 // NewPDNcalculationAPIService creates a default api service
-func NewPDNcalculationAPIService() *PDNcalculationAPIService {
-	return &PDNcalculationAPIService{}
+func NewPDNcalculationAPIService(pdnCalculationProcessor PDNCalculationProcessor, log *slog.Logger) *PDNcalculationAPIService {
+	return &PDNcalculationAPIService{
+		pdnCalculationProcessor: pdnCalculationProcessor,
+		log:                     log,
+	}
 }
 
 // GetParametresByLoanId - Find parametres by loan id
 func (s *PDNcalculationAPIService) GetParametresByLoanId(ctx context.Context, loanid string) (ImplResponse, error) {
-	// TODO - update GetParametresByLoanId with the required logic for this service method.
-	// Add api_pd_ncalculation_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
-
-	// TODO: Uncomment the next line to return response Response(200, Pdnparameters{}) or use other options such as http.Ok ...
-	// return Response(200, Pdnparameters{}), nil
-
-	// TODO: Uncomment the next line to return response Response(400, {}) or use other options such as http.Ok ...
-	// return Response(400, nil),nil
-
-	// TODO: Uncomment the next line to return response Response(404, {}) or use other options such as http.Ok ...
-	// return Response(404, nil),nil
-
-	return Response(http.StatusNotImplemented, nil), errors.New("GetParametresByLoanId method not implemented")
+	if loanid == "" {
+		return Response(http.StatusBadRequest, nil), errors.New("loanId is required")
+	}
+	calculations, err := s.pdnCalculationProcessor.PDNCalculationByLoanId(ctx, loanid)
+	if err != nil {
+		return Response(http.StatusNotFound, nil), err
+	}
+	openApiCalculation := Pdnparameters{
+		LoanId:               calculations.LoanId,
+		Incomes:              calculations.Incomes,
+		Expenses:             calculations.Expenses,
+		IncomesTypeId:        calculations.IncomesTypeId,
+		AverageRegionIncomes: calculations.AverageRegionIncomes,
+	}
+	return Response(http.StatusOK, openApiCalculation), nil
 }

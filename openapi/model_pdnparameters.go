@@ -10,20 +10,16 @@
 
 package openapi
 
-
-
-
 type Pdnparameters struct {
+	LoanId string `json:"LoanId"`
 
-	LoanId string `json:"LoanId,omitempty"`
+	Incomes float32 `json:"Incomes"`
 
-	Incomes float32 `json:"Incomes,omitempty"`
+	Expenses float32 `json:"Expenses"`
 
-	Expenses float32 `json:"Expenses,omitempty"`
+	IncomesTypeId string `json:"IncomesTypeId"`
 
-	IncomesTypeId string `json:"IncomesTypeId,omitempty"`
-
-	AverageRegionIncomes float32 `json:"AverageRegionIncomes,omitempty"`
+	AverageRegionIncomes float32 `json:"AverageRegionIncomes"`
 }
 
 // AssertPdnparametersRequired checks if the required fields are not zero-ed
