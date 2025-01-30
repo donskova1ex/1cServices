@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/donskova1ex/1cServices/internal"
 
 	"github.com/donskova1ex/1cServices/internal/domain"
 )
@@ -48,9 +49,15 @@ WHERE
     ORDER BY lapcl2.Date DESC
   )`
 	row := r.db.QueryRowContext(ctx, query, sql.Named("id", loanid))
-	err := row.Scan(&pdnParameters.LoanId, &pdnParameters.Incomes, &pdnParameters.Expenses, &pdnParameters.IncomesTypeId, &pdnParameters.AverageRegionIncomes)
+	err := row.Scan(
+		&pdnParameters.LoanId,
+		&pdnParameters.Incomes,
+		&pdnParameters.Expenses,
+		&pdnParameters.IncomesTypeId,
+		&pdnParameters.AverageRegionIncomes,
+	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("no rows: %w", err)
+		return nil, fmt.Errorf("%w with Id [%s]", internal.ErrNotFound, loanid)
 
 	}
 	return pdnParameters, nil

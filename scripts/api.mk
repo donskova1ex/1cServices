@@ -1,5 +1,5 @@
 PROJECT?=github.com/donskova1ex/1cServices
-API_NAME?=api
+API_NAME?=1c_api
 API_VERSION?=0.0.1
 API_CONTAINER_NAME?=docker.io/donskova1ex/${API_NAME}
 

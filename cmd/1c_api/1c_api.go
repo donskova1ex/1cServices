@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/donskova1ex/1cServices/internal/processors"
 	"github.com/donskova1ex/1cServices/internal/repositories"
 	"log"
@@ -18,7 +17,6 @@ func main() {
 	logger := slog.New(logJSONHandler)
 	slog.SetDefault(logger)
 	sqlDSN := os.Getenv("SQL_DSN")
-	fmt.Println(sqlDSN)
 	if sqlDSN == "" {
 		logger.Error("empty SQL_DSN")
 		os.Exit(1)

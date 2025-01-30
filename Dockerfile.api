@@ -14,4 +14,4 @@ ENV CGO_ENABLED=0
 RUN make api_local_build
 
 EXPOSE ${API_PORT}
-ENTRYPOINT [ "/go/src/bin/api" ]
+ENTRYPOINT [ "/go/src/bin/1c_api" ]

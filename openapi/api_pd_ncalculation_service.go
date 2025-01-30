@@ -30,7 +30,7 @@ type PDNcalculationAPIService struct {
 	log                     *slog.Logger
 }
 
-// NewPDNcalculationAPIService creates a default api service
+// NewPDNcalculationAPIService creates a default 1c_api service
 func NewPDNcalculationAPIService(pdnCalculationProcessor PDNCalculationProcessor, log *slog.Logger) *PDNcalculationAPIService {
 	return &PDNcalculationAPIService{
 		pdnCalculationProcessor: pdnCalculationProcessor,

@@ -17,7 +17,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// PDNcalculationAPIController binds http requests to an api service and writes the service results to the http response
+// PDNcalculationAPIController binds http requests to an 1c_api service and writes the service results to the http response
 type PDNcalculationAPIController struct {
 	service      PDNcalculationAPIServicer
 	errorHandler ErrorHandler
@@ -33,7 +33,7 @@ func WithPDNcalculationAPIErrorHandler(h ErrorHandler) PDNcalculationAPIOption {
 	}
 }
 
-// NewPDNcalculationAPIController creates a default api controller
+// NewPDNcalculationAPIController creates a default 1c_api controller
 func NewPDNcalculationAPIController(s PDNcalculationAPIServicer, opts ...PDNcalculationAPIOption) *PDNcalculationAPIController {
 	controller := &PDNcalculationAPIController{
 		service:      s,
@@ -47,12 +47,12 @@ func NewPDNcalculationAPIController(s PDNcalculationAPIServicer, opts ...PDNcalc
 	return controller
 }
 
-// Routes returns all the api routes for the PDNcalculationAPIController
+// Routes returns all the 1c_api routes for the PDNcalculationAPIController
 func (c *PDNcalculationAPIController) Routes() Routes {
 	return Routes{
 		"GetParametresByLoanId": Route{
 			strings.ToUpper("Get"),
-			"/api/v1/pdncalculation/{loanid}",
+			"/1c_api/v1/pdncalculation/{loanid}",
 			c.GetParametresByLoanId,
 		},
 	}
