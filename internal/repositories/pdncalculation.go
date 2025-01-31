@@ -19,7 +19,7 @@ func (r *Repository) GetPDNParameters(ctx context.Context, loanid string) (*doma
 	defer cancel()
 
 	g := new(errgroup.Group)
-	//TODO: select with context, mutex adding, parallel get query
+
 	pdnParameters := &domain.CalculationParameters{}
 	mu := &sync.Mutex{}
 
