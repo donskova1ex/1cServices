@@ -57,7 +57,7 @@ func (c *PDNcalculationAPIController) Routes() Routes {
 		},
 	}
 }
-
+//TODO: Спросить про контекст на замену своего
 // GetParametresByLoanId - Find parametres by loan id
 func (c *PDNcalculationAPIController) GetParametresByLoanId(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)

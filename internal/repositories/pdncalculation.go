@@ -6,117 +6,130 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/donskova1ex/1cServices/internal"
 	"github.com/donskova1ex/1cServices/internal/domain"
+	"golang.org/x/sync/errgroup"
 )
 
 func (r *Repository) GetPDNParameters(ctx context.Context, loanid string) (*domain.CalculationParameters, error) {
 
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	g := new(errgroup.Group)
+	//TODO: select with context, mutex adding, parallel get query
 	pdnParameters := &domain.CalculationParameters{}
-	resultChan := make(chan *domain.CalculationParameters, 3)
-	errChan := make(chan error, 3)
-	defer close(resultChan)
-	defer close(errChan)
+	mu := &sync.Mutex{}
 
-	wg := &sync.WaitGroup{}
-	wg.Add(3)
-	go r.getClientsIncomes(ctx, loanid, pdnParameters, wg, resultChan, errChan)
-	go r.getLoanDetails(ctx, loanid, pdnParameters, wg, resultChan, errChan)
-	go r.getRegionIncomes(ctx, loanid, pdnParameters, wg, resultChan, errChan)
-	wg.Wait()
+	g.Go(func() error {
+		return r.getClientsIncomes(ctx, loanid, pdnParameters, mu)
+	})
 
-	select {
-	case err := <-errChan:
+	g.Go(func() error {
+		return r.getLoanDetails(ctx, loanid, pdnParameters, mu)
+	})
+
+	g.Go(func() error {
+		return r.getRegionIncomes(ctx, loanid, pdnParameters, mu)
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
-	case pdnParameters := <-resultChan:
-		return pdnParameters, nil
 	}
+	return pdnParameters, nil
+
 }
 
 func (r *Repository) getClientsIncomes(
 	ctx context.Context, loanid string,
 	pdnParameters *domain.CalculationParameters,
-	wg *sync.WaitGroup,
-	resultChan chan<- *domain.CalculationParameters,
-	errChan chan<- error) {
+	mu *sync.Mutex,
+) error {
 
-	defer wg.Done()
 	query := `SELECT
-  lapcl.Income AS 'Incomes',
-  lapcl.Expenses AS 'Expenses',
-  CASE
-    WHEN ci.ClientIncomeType = 0 THEN 'Зарплата'
-    WHEN ci.ClientIncomeType = 1 THEN 'Пенсия'
-    WHEN ci.ClientIncomeType = 2 THEN 'Выписка'
-    ELSE 'Не опрпделено'
-  END AS 'IncomesTypeId'
-FROM 
-  LoanApplicationPdnCalcLogs lapcl
-  LEFT JOIN Loans l ON lapcl.LoanApplicationId = l.LoanApplicationId
-  LEFT JOIN ClientIncomes ci ON ci.ClientId = l.ClientId AND ci.CreateDate <= l.CreateDate
-WHERE 
-  l.Id = @id
-  AND ci.Id = (
-    SELECT TOP 1 ci2.Id 
-    FROM ClientIncomes ci2 
-    WHERE ci2.ClientId = l.ClientId 
-    ORDER BY ci2.CreateDate DESC
-  ) -- Выбираем последний доход клиента
-  AND lapcl.id = (
-  SELECT TOP 1 lapcl2.Id 
-    FROM LoanApplicationPdnCalcLogs lapcl2 
-    WHERE lapcl2.LoanApplicationId = l.LoanApplicationId
-    ORDER BY lapcl2.Date DESC
-  )`
+				lapcl.Income AS 'Incomes',
+				lapcl.Expenses AS 'Expenses',
+				CASE
+					WHEN ci.ClientIncomeType = 0 THEN 'Зарплата'
+					WHEN ci.ClientIncomeType = 1 THEN 'Пенсия'
+					WHEN ci.ClientIncomeType = 2 THEN 'Выписка'
+					ELSE 'Не опрпделено'
+				END AS 'IncomesTypeId'
+				FROM 
+				LoanApplicationPdnCalcLogs lapcl
+				LEFT JOIN Loans l ON lapcl.LoanApplicationId = l.LoanApplicationId
+				LEFT JOIN ClientIncomes ci ON ci.ClientId = l.ClientId AND ci.CreateDate <= l.CreateDate
+				WHERE 
+				l.Id = @id
+				AND ci.Id = (
+					SELECT TOP 1 ci2.Id 
+					FROM ClientIncomes ci2 
+					WHERE ci2.ClientId = l.ClientId 
+					ORDER BY ci2.CreateDate DESC
+				) -- Выбираем последний доход клиента
+				AND lapcl.id = (
+				SELECT TOP 1 lapcl2.Id 
+					FROM LoanApplicationPdnCalcLogs lapcl2 
+					WHERE lapcl2.LoanApplicationId = l.LoanApplicationId
+					ORDER BY lapcl2.Date DESC)`
 	row := r.db.QueryRowContext(ctx, query, sql.Named("id", loanid))
-	err := row.Scan(&pdnParameters.Incomes, &pdnParameters.Expenses, &pdnParameters.IncomesTypeId)
+	var incomes float32
+	var expenses float32
+	var incomesTypeId string
+	err := row.Scan(&incomes, &expenses, &incomesTypeId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errChan <- fmt.Errorf("client incomes not found for loan Id [%s]", loanid)
-			return
+			return fmt.Errorf("client incomes not found for loan Id [%s]", loanid)
+
 		}
-		errChan <- fmt.Errorf("failed to get client incomes: %w", internal.ErrClientIncomes)
+		return fmt.Errorf("failed to get client incomes: %w", internal.ErrClientIncomes)
+
 	}
-	resultChan <- pdnParameters
+	mu.Lock()
+	pdnParameters.Incomes = incomes
+	pdnParameters.Expenses = expenses
+	pdnParameters.IncomesTypeId = incomesTypeId
+	mu.Unlock()
+	return nil
 }
 
 func (r *Repository) getRegionIncomes(
 	ctx context.Context, loanid string,
 	pdnParameters *domain.CalculationParameters,
-	wg *sync.WaitGroup,
-	resultChan chan<- *domain.CalculationParameters,
-	errChan chan<- error) {
-	defer wg.Done()
+	mu *sync.Mutex,
+) error {
 	query := `SELECT rai.Value FROM RegionAvgIncomes rai
-  				JOIN Regions region ON rai.RegionId = region.Id
-  				JOIN Address regaddress ON LEFT(regaddress.KladrId, 2) = region.KladrCode
-  				JOIN Clients c ON c.RegAddressId = regaddress.Id
-  				JOIN Loans l ON l.ClientId = c.Id
-  				WHERE l.Id = @id 
-  				AND rai.Year = YEAR(l.StartDate) 
-  				AND rai.Quarter = DATEPART(quarter, l.StartDate)`
+					JOIN Regions region ON rai.RegionId = region.Id
+					JOIN Address regaddress ON LEFT(regaddress.KladrId, 2) = region.KladrCode
+					JOIN Clients c ON c.RegAddressId = regaddress.Id
+					JOIN Loans l ON l.ClientId = c.Id
+					WHERE l.Id = @id 
+					AND rai.Year = YEAR(l.StartDate) 
+					AND rai.Quarter = DATEPART(quarter, l.StartDate)`
 	row := r.db.QueryRowContext(ctx, query, sql.Named("id", loanid))
-	err := row.Scan(&pdnParameters.AverageRegionIncomes)
+	var averageRegionIncomes float32
+	err := row.Scan(&averageRegionIncomes)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errChan <- fmt.Errorf("err is [%w]; region incomes not found for loan Id [%s]", internal.ErrNotFound, loanid)
-			return
-		}
-		errChan <- fmt.Errorf("failed to get region incomes: %w", internal.ErrRegionIncomes)
-		return
-	}
+			return fmt.Errorf("err is [%w]; region incomes not found for loan Id [%s]", internal.ErrNotFound, loanid)
 
-	resultChan <- pdnParameters
+		}
+		return fmt.Errorf("failed to get region incomes: %w", internal.ErrRegionIncomes)
+
+	}
+	mu.Lock()
+	pdnParameters.AverageRegionIncomes = averageRegionIncomes
+	mu.Unlock()
+	return nil
 }
 
 func (r *Repository) getLoanDetails(
 	ctx context.Context, loanid string,
 	pdnParameters *domain.CalculationParameters,
-	wg *sync.WaitGroup,
-	resultChan chan<- *domain.CalculationParameters,
-	errChan chan<- error) {
-	defer wg.Done()
+	mu *sync.Mutex,
+) error {
 	query := `SELECT
 				  l.Id AS 'LoanId',
 				  CASE
@@ -144,14 +157,19 @@ func (r *Repository) getLoanDetails(
 					ORDER BY lapcl2.Date DESC
 				  )`
 	row := r.db.QueryRowContext(ctx, query, sql.Named("id", loanid))
-	err := row.Scan(&pdnParameters.LoanId, &pdnParameters.IncomesTypeId)
+	var loanId string
+	var incomesTypeId string
+	err := row.Scan(&loanId, &incomesTypeId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errChan <- fmt.Errorf("loan details not found for loan Id [%s]", loanid)
-			return
+			return fmt.Errorf("loan details not found for loan Id [%s]", loanid)
+
 		}
-		errChan <- fmt.Errorf("failed to get loan details: %w", internal.ErrLoanDetails)
-		return
+		return fmt.Errorf("failed to get loan details: %w", internal.ErrLoanDetails)
 	}
-	resultChan <- pdnParameters
+	mu.Lock()
+	pdnParameters.IncomesTypeId = incomesTypeId
+	pdnParameters.LoanId = loanId
+	mu.Unlock()
+	return nil
 }
