@@ -18,9 +18,7 @@ import (
 	"net/http"
 )
 
-// PDNcalculationAPIService is a service that implements the logic for the PDNcalculationAPIServicer
-// This service should implement the business logic for every endpoint for the PDNcalculationAPI API.
-// Include any external packages or services that will be required by this service.
+
 type PDNCalculationProcessor interface {
 	PDNCalculationByLoanId(ctx context.Context, loanid string) (*domain.CalculationParameters, error)
 }
