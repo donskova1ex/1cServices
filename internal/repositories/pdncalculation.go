@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/donskova1ex/1cServices/internal/domain"
 	"sync"
+
+	"github.com/donskova1ex/1cServices/internal/domain"
 )
 
 func (r *Repository) GetPDNParameters(ctx context.Context, loanid string) (*domain.CalculationParameters, error) {
@@ -27,8 +28,8 @@ func (r *Repository) GetPDNParameters(ctx context.Context, loanid string) (*doma
 	select {
 	case err := <-errChan:
 		return nil, err
-	case pdnParam := <-resultChan:
-		return pdnParam, nil
+	case pdnParameters := <-resultChan:
+		return pdnParameters, nil
 	}
 }
 
