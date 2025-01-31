@@ -7,4 +7,4 @@ services:
       - SQL_DSN=${SQL_DSN}
     image: donskova1ex/1c_api:latest
     ports:
-      - 8080:${API_PORT}
+      - 1616:${API_PORT}

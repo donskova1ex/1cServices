@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/donskova1ex/1cServices/internal/processors"
-	"github.com/donskova1ex/1cServices/internal/repositories"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/donskova1ex/1cServices/internal/processors"
+	"github.com/donskova1ex/1cServices/internal/repositories"
 
 	openapi "github.com/donskova1ex/1cServices/openapi"
 )
@@ -55,5 +56,5 @@ func main() {
 		logger.Error("failed to start server", slog.String("err", err.Error()))
 	}
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":1616", router))
 }
