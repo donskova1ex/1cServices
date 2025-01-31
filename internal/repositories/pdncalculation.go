@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/donskova1ex/1cServices/internal"
 	"github.com/donskova1ex/1cServices/internal/domain"
 )
 
@@ -75,7 +76,7 @@ WHERE
 			errChan <- fmt.Errorf("client incomes not found for loan Id [%s]", loanid)
 			return
 		}
-		errChan <- fmt.Errorf("failed to get client incomes: %w", err)
+		errChan <- fmt.Errorf("failed to get client incomes: %w", internal.ErrClientIncomes)
 	}
 	resultChan <- pdnParameters
 }
@@ -99,10 +100,10 @@ func (r *Repository) getRegionIncomes(
 	err := row.Scan(&pdnParameters.AverageRegionIncomes)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errChan <- fmt.Errorf("region incomes not found for loan Id [%s]", loanid)
+			errChan <- fmt.Errorf("err is [%w]; region incomes not found for loan Id [%s]", internal.ErrNotFound, loanid)
 			return
 		}
-		errChan <- fmt.Errorf("failed to get region incomes: %w", err)
+		errChan <- fmt.Errorf("failed to get region incomes: %w", internal.ErrRegionIncomes)
 		return
 	}
 
@@ -149,7 +150,7 @@ func (r *Repository) getLoanDetails(
 			errChan <- fmt.Errorf("loan details not found for loan Id [%s]", loanid)
 			return
 		}
-		errChan <- fmt.Errorf("failed to get loan details: %w", err)
+		errChan <- fmt.Errorf("failed to get loan details: %w", internal.ErrLoanDetails)
 		return
 	}
 	resultChan <- pdnParameters
