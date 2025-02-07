@@ -5,7 +5,7 @@ info:
     This is a sample some endpoints for 1C
   version: 1.0.0
 servers:
-  - url: https://1CServices.swagger.io/api/v1
+  - url: http://192.168.3.11:8080/1c_api/v1
 tags:
   - name: PDNcalculation
     description: PDN calculation parametres
