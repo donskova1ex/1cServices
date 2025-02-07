@@ -31,6 +31,7 @@ func (r *Repository) GetRkoByDivision(ctx context.Context, from string, to strin
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
 	}
+	defer rows.Close()
 	mu.Lock()
 	defer mu.Unlock()
 	for rows.Next() {
@@ -43,6 +44,7 @@ func (r *Repository) GetRkoByDivision(ctx context.Context, from string, to strin
 		divisionRko := &domain.DivisionRko{}
 		divisionRko.Quantity = quantity
 		divisionRko.Result = result
+		divisionRko.DivisionId = divisionId
 		rkoSlise = append(rkoSlise, divisionRko)
 	}
 
