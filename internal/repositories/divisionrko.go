@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/donskova1ex/1cServices/internal/domain"
-	"sync"
 )
 
 func (r *Repository) GetRkoByDivision(ctx context.Context, from string, to string) ([]*domain.DivisionRko, error) {
@@ -16,8 +15,6 @@ func (r *Repository) GetRkoByDivision(ctx context.Context, from string, to strin
 	var divisionId string
 	var result float32
 	var quantity int32
-
-	mu := &sync.Mutex{}
 
 	query := `SELECT
 	  rfl.DepartamentId AS 'DivisionId'
@@ -34,18 +31,16 @@ func (r *Repository) GetRkoByDivision(ctx context.Context, from string, to strin
 	}
 	for rows.Next() {
 
-		if err := rows.Scan(&divisionId, &quantity, &result); err != nil {
+		if err := rows.Scan(&divisionId, &result, &quantity); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return rkoSlise, nil
 			}
 			return nil, fmt.Errorf("scan: %w", err)
 		}
 
-		mu.Lock()
 		divisionRko.DivisionId = divisionId
 		divisionRko.Quantity = quantity
 		divisionRko.Result = result
-		mu.Unlock()
 
 		rkoSlise = append(rkoSlise, divisionRko)
 	}
