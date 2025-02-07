@@ -4,7 +4,7 @@ info:
   title: Swagger user management service - OpenAPI 3.0
   version: 1.0.0
 servers:
-- url: https://1CServices.swagger.io/api/v1
+- url: http://192.168.3.11:8080/1c_api/v1/rkobydivision
 tags:
 - description: PDN calculation parametres
   name: PDNcalculation
@@ -36,6 +36,41 @@ paths:
       summary: Find parametres by loan id
       tags:
       - PDNcalculation
+  /rkobydivision:
+    get:
+      description: returns division issue for the period
+      operationId: RkoByDivision
+      parameters:
+      - explode: true
+        in: query
+        name: from
+        required: true
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: to
+        required: true
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/rkobydivision'
+                type: array
+          description: successful operation
+        "400":
+          description: Invalid dates
+        "404":
+          description: parameters not found
+      summary: Division issue for the period
+      tags:
+      - RkoByDivision
 components:
   schemas:
     pdnparameters:
@@ -60,5 +95,21 @@ components:
           type: string
         AverageRegionIncomes:
           example: 36587.0
+          type: number
+      type: object
+    rkobydivision:
+      example:
+        Quantity: 16
+        DivisionId: "123"
+        Result: 56756.07
+      properties:
+        DivisionId:
+          example: "123"
+          type: string
+        Result:
+          example: 56756.07
+          type: number
+        Quantity:
+          example: 16
           type: number
       type: object

@@ -35,8 +35,38 @@ paths:
           description: Invalid ID supplied
         '404':
           description: parametres not found
-
-components: 
+  /rkobydivision:
+    get:
+      tags:
+        - RkoByDivision
+      summary: Division issue for the period
+      description: returns division issue for the period
+      operationId: RkoByDivision
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/rkobydivision"
+        '400':
+          description: Invalid dates
+        '404':
+          description: parameters not found
+components:
   schemas:
     pdnparameters:
       type: object
@@ -56,6 +86,15 @@ components:
         AverageRegionIncomes:
           type: number
           example: 36587.00
-    
-
-
+    rkobydivision:
+      type: object
+      properties:
+        DivisionId:
+          type: string
+          example: 123
+        Result:
+          type: number
+          example: 56756.07
+        Quantity:
+          type: number
+          example: 16

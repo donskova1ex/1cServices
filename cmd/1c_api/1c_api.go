@@ -17,13 +17,14 @@ func main() {
 	logJSONHandler := slog.NewJSONHandler(os.Stdout, nil)
 	logger := slog.New(logJSONHandler)
 	slog.SetDefault(logger)
-
-	sqlDSN := os.Getenv("SQL_DSN")
+	sqlDSN := "server=192.168.3.23,1430;user id=1C_user;password=MhO52KbhaC;database=crm_real_data;"
+	apiPort := "8080"
+	//sqlDSN := os.Getenv("SQL_DSN")
 	if sqlDSN == "" {
 		logger.Error("empty SQL_DSN")
 		os.Exit(1)
 	}
-	apiPort := os.Getenv("API_PORT")
+	//apiPort := os.Getenv("API_PORT")
 	if apiPort == "" {
 		logger.Error("empty API_PORT")
 		os.Exit(1)
@@ -40,11 +41,16 @@ func main() {
 
 	defer db.Close()
 	repository := repositories.NewRepository(db)
+
 	pdnCalcProcessor := processors.NewPDNParametres(repository, logger)
 	PDNcalculationAPIService := openapi.NewPDNcalculationAPIService(pdnCalcProcessor, logger)
 	PDNcalculationAPIController := openapi.NewPDNcalculationAPIController(PDNcalculationAPIService)
 
-	router := openapi.NewRouter(PDNcalculationAPIController)
+	rkoByDivisionProcessor := processors.NewDivisionRko(repository, logger)
+	RkoByDivisionAPIService := openapi.NewRkoByDivisionAPIService(rkoByDivisionProcessor, logger)
+	RkoByDivisionAPIController := openapi.NewRkoByDivisionAPIController(RkoByDivisionAPIService)
+
+	router := openapi.NewRouter(PDNcalculationAPIController, RkoByDivisionAPIController)
 
 	httpServer := http.Server{
 		Addr:     ":" + apiPort,
