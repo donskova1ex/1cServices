@@ -28,7 +28,7 @@ func (r *Repository) GetRkoByDivision(ctx context.Context, from string, to strin
 	GROUP BY rfl.DepartamentId
 	ORDER BY rfl.DepartamentId`
 
-	rows, err := r.db.QueryContext(ctx, query, sql.Named("from", fmt.Sprintf("'%s'", from)), sql.Named("to", fmt.Sprintf("'%s'", to)))
+	rows, err := r.db.QueryContext(ctx, query, sql.Named("from", from), sql.Named("to", to))
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
 	}
