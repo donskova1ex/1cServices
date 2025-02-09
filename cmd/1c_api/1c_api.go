@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"github.com/donskova1ex/1cServices/internal"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/donskova1ex/1cServices/internal"
 
 	"github.com/donskova1ex/1cServices/internal/processors"
 	"github.com/donskova1ex/1cServices/internal/repositories"
@@ -60,7 +61,7 @@ func main() {
 		Handler:  router,
 	}
 
-	Closer := internal.NewGracefulCloser()
+	Closer := internal.NewCloser()
 
 	Closer.Add(func() error {
 		logger.Info("closing db connection")
