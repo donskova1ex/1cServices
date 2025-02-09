@@ -73,14 +73,14 @@ func main() {
 	})
 
 	Closer.Add(func() error {
-		logger.Info("shutting down HTTP server")
+		logger.Info("shutting down API server")
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := httpServer.Shutdown(ctx); err != nil {
-			logger.Error("error shutting down HTTP server", slog.String("err", err.Error()))
+			logger.Error("error shutting down API server", slog.String("err", err.Error()))
 			return err
 		}
-		logger.Info("HTTP server shut down successfully")
+		logger.Info("API server shut down successfully")
 		return nil
 	})
 
