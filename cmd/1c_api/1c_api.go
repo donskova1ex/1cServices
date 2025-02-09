@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
+	"github.com/donskova1ex/1cServices/internal"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/donskova1ex/1cServices/internal/processors"
 	"github.com/donskova1ex/1cServices/internal/repositories"
@@ -39,7 +42,6 @@ func main() {
 		return
 	}
 
-	defer db.Close()
 	repository := repositories.NewRepository(db)
 
 	pdnCalcProcessor := processors.NewPDNParametres(repository, logger)
@@ -57,6 +59,37 @@ func main() {
 		ErrorLog: slog.NewLogLogger(logJSONHandler, slog.LevelError),
 		Handler:  router,
 	}
+
+	Closer := internal.NewGracefulCloser()
+
+	Closer.Add(func() error {
+		logger.Info("closing db connection")
+		if err := db.Close(); err != nil {
+			logger.Error("error closing db", slog.String("err", err.Error()))
+			return err
+		}
+		logger.Info("db connection closed successfully")
+		return nil
+	})
+
+	Closer.Add(func() error {
+		logger.Info("shutting down HTTP server")
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := httpServer.Shutdown(ctx); err != nil {
+			logger.Error("error shutting down HTTP server", slog.String("err", err.Error()))
+			return err
+		}
+		logger.Info("HTTP server shut down successfully")
+		return nil
+	})
+
+	go func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		Closer.Run(ctx, logger)
+	}()
+
 	logger.Info("application started", slog.String("port", apiPort))
 	if err := httpServer.ListenAndServe(); err != nil {
 		logger.Error("failed to start server", slog.String("err", err.Error()))

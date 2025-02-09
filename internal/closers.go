@@ -19,11 +19,11 @@ func NewGracefulCloser() *GracefulCloser {
 	}
 }
 
-func (g *GracefulCloser) AddCloser(closingFunc func() error) {
+func (g *GracefulCloser) Add(closingFunc func() error) {
 	g.closingFunc = append(g.closingFunc, closingFunc)
 }
 
-func (g *GracefulCloser) RunCloser(ctx context.Context, log *slog.Logger) {
+func (g *GracefulCloser) Run(ctx context.Context, log *slog.Logger) {
 	wg := &sync.WaitGroup{}
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
