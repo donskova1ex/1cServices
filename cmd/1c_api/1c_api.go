@@ -2,16 +2,14 @@ package main
 
 import (
 	"context"
-	"log"
+	"errors"
+	"github.com/donskova1ex/1cServices/internal"
+	"github.com/donskova1ex/1cServices/internal/processors"
+	"github.com/donskova1ex/1cServices/internal/repositories"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/donskova1ex/1cServices/internal"
-
-	"github.com/donskova1ex/1cServices/internal/processors"
-	"github.com/donskova1ex/1cServices/internal/repositories"
 
 	openapi "github.com/donskova1ex/1cServices/openapi"
 )
@@ -60,7 +58,6 @@ func main() {
 		ErrorLog: slog.NewLogLogger(logJSONHandler, slog.LevelError),
 		Handler:  router,
 	}
-
 	Closer := internal.NewCloser()
 
 	Closer.Add(func() error {
@@ -74,26 +71,29 @@ func main() {
 	})
 
 	Closer.Add(func() error {
-		logger.Info("shutting down API server")
+		logger.Info("shutting down HTTP server")
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := httpServer.Shutdown(ctx); err != nil {
-			logger.Error("error shutting down API server", slog.String("err", err.Error()))
+			logger.Error("error shutting down HTTP server", slog.String("err", err.Error()))
 			return err
 		}
-		logger.Info("API server shut down successfully")
+		logger.Info("HTTP server shut down successfully")
 		return nil
 	})
-
+	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
+	defer shutdownCancel()
 	go func() {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(shutdownCtx)
 		defer cancel()
 		Closer.Run(ctx, logger)
+		os.Exit(0)
 	}()
 	logger.Info("application started", slog.String("port", apiPort))
-	if err := httpServer.ListenAndServe(); err != nil {
+	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("failed to start server", slog.String("err", err.Error()))
+		return
 	}
 
-	log.Fatal(http.ListenAndServe(":1616", router))
+	//log.Fatal(http.ListenAndServe(":1616", router))
 }
