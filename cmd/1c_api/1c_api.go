@@ -90,7 +90,6 @@ func main() {
 		defer cancel()
 		Closer.Run(ctx, logger)
 	}()
-
 	logger.Info("application started", slog.String("port", apiPort))
 	if err := httpServer.ListenAndServe(); err != nil {
 		logger.Error("failed to start server", slog.String("err", err.Error()))

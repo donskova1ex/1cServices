@@ -43,5 +43,5 @@ func (g *Closer) Run(ctx context.Context, log *slog.Logger) {
 		}(closingFunc)
 	}
 	wg.Wait()
-	log.Info("all functions closer successfully")
+	log.Info("everything closed correctly")
 }
