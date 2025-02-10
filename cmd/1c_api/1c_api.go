@@ -90,10 +90,10 @@ func main() {
 		os.Exit(0)
 	}()
 	logger.Info("application started", slog.String("port", apiPort))
-	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("failed to start server", slog.String("err", err.Error()))
 		return
 	}
-
+	logger.Info("server gracefully shut down")
 	//log.Fatal(http.ListenAndServe(":1616", router))
 }
