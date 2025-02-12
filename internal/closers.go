@@ -27,12 +27,14 @@ func (g *Closer) Run(ctx context.Context, log *slog.Logger) {
 	wg := &sync.WaitGroup{}
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
 	select {
-	case <-signals:
-		log.Info("closer signal received")
+	case sig := <-signals:
+		log.Info("closer signal received", "signal", sig)
 	case <-ctx.Done():
 		log.Info("closer context cancelled")
 	}
+
 	wg.Add(len(g.closingFunc))
 	for _, closingFunc := range g.closingFunc {
 		go func(closingFunc func() error) {
