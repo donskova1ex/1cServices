@@ -31,7 +31,7 @@ func (p *pdnCalculation) PDNCalculationByLoanId(ctx context.Context, loanid stri
 	pdnCalculation, err := p.pdnCalculationRepository.GetPDNParameters(ctx, loanid)
 	if err != nil {
 		p.log.Error(
-			"Error getting PDN Calculation Parameters",
+			"error getting PDN calculation parameters",
 			slog.String("err", err.Error()),
 			slog.String("loanid", loanid),
 		)
